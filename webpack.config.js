@@ -39,7 +39,7 @@ module.exports = {
 	// http://codys.club/blog/2015/07/04/webpack-create-multiple-bundles-with-entry-points/#sec-3
 	entry: entries,
 	target: 'node',
-	mode: 'production',
+	mode: 'development',
 	module: {
 		rules: [
 			{
@@ -47,6 +47,11 @@ module.exports = {
 				use: ['ts-loader', 'eslint-loader'],
 			},
 		],
+	},
+	optimization: {
+		// Because mysql will fail otherwise
+		// https://stackoverflow.com/questions/55988989/error-received-packet-in-the-wrong-sequence-when-connect-to-serverless-auror
+		minimize: false,
 	},
 	resolve: {
 		extensions: ['.tsx', '.ts', '.js'],

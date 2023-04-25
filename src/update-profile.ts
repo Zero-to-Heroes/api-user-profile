@@ -14,8 +14,10 @@ export default async (event, context): Promise<any> => {
 	const message: ProfileUpdateInput = JSON.parse(event.body);
 	logger.debug('will process', message);
 
-	const token = message.token;
+	const token = message.jwt;
+	logger.debug('token', token);
 	const validationResult = await validateOwToken(token);
+	logger.debug('validation result', validationResult);
 	if (!validationResult?.username) {
 		cleanup();
 		return {
@@ -35,15 +37,18 @@ export default async (event, context): Promise<any> => {
 };
 
 const getExistingProfile = async (mysql: ServerlessMysql, userName: string): Promise<Profile> => {
-	const existingProfile = await mysql.query('SELECT * FROM profiles WHERE userName = ?', [userName]);
-	return existingProfile[0];
+	const existingProfile = await mysql.query('SELECT * FROM user_profile WHERE userName = ?', [userName]);
+	logger.debug('existing profile', existingProfile);
+	return existingProfile[0]?.profile ? JSON.parse(existingProfile[0].profile) : {};
 };
 
-const mergeProfiles = (existingProfile: Profile, newProfile: Profile): Profile => {
-	return {
+const mergeProfiles = (existingProfile: Profile, newProfile: ProfileUpdateInput): Profile => {
+	const result: ProfileUpdateInput = {
 		...existingProfile,
 		...newProfile,
 	};
+	delete result.jwt;
+	return result;
 };
 
 const updateProfile = async (mysql: ServerlessMysql, userName: string, profile: Profile): Promise<void> => {
