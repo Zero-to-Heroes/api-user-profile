@@ -9,11 +9,9 @@ Resources:
         Type: AWS::Serverless::Function
         Properties:
             Handler: update-profile.default
-            # Runtime: nodejs8.10
-            Runtime: nodejs16.x
-            Timeout: 1000
-            ReservedConcurrentExecutions: 5
-            MemorySize: 256 # Need to increase the memory to go faster and avoid the 30s timeout on the API gateway
+            Runtime: nodejs18.x
+            Timeout: 10
+            MemorySize: 256
             CodeUri: ./dist/update-profile
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
