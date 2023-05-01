@@ -2,18 +2,21 @@
 
 import { getConnection, logBeforeTimeout } from '@firestone-hs/aws-lambda-utils';
 import { logger } from '@firestone-hs/aws-lambda-utils/dist/services/logger';
+import SecretsManager, { GetSecretValueRequest, GetSecretValueResponse } from 'aws-sdk/clients/secretsmanager';
+import { JwtPayload, decode, verify } from 'jsonwebtoken';
 import { ServerlessMysql } from 'serverless-mysql';
 import { Profile } from './public-api';
+
+const secretsManager = new SecretsManager({ region: 'us-west-2' });
 
 // This example demonstrates a NodeJS 8.10 async handler[1], however of course you could use
 // the more traditional callback-style handler.
 // [1]: https://aws.amazon.com/blogs/compute/node-js-8-10-runtime-now-available-in-aws-lambda/
 export default async (event, context): Promise<any> => {
 	const cleanup = logBeforeTimeout(context);
-	logger.log('received message', event);
-	logger.log('with context', context);
+	logger.debug('received message', event);
+	logger.debug('with context', context);
 
-	
 	const headers = {
 		'Access-Control-Allow-Headers':
 			'Accept,Accept-Language,Content-Language,Content-Type,Authorization,x-correlation-id,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
@@ -30,13 +33,34 @@ export default async (event, context): Promise<any> => {
 	}
 
 	const message: { token: string } = JSON.parse(event.body);
-	logger.log('will process', message);
+	logger.debug('will process', message);
 
 	const token = message.token;
 	logger.debug('token', token);
 
+	const decoded = decode(token) as JwtPayload;
+	logger.debug('decoded', decoded);
+
+	const secretRequest: GetSecretValueRequest = {
+		SecretId: 'sso',
+	};
+	const secret: SecretInfo = await getSecret(secretRequest);
+	const valid = verify(token, secret.fsJwtTokenKey, {
+		algorithms: ['HS256'],
+	});
+	logger.debug('valid', valid);
+
+	if (!valid?.sub) {
+		logger.warn('invalid token', token, decoded, message);
+		cleanup();
+		return {
+			statusCode: 403,
+			headers: headers,
+		};
+	}
+
 	const mysql = await getConnection();
-	const existingProfile = await getExistingProfile(mysql, 'daedin');
+	const existingProfile = await getExistingProfile(mysql, decoded.sub);
 	await mysql.end();
 	cleanup();
 	return {
@@ -51,3 +75,18 @@ const getExistingProfile = async (mysql: ServerlessMysql, userName: string): Pro
 	logger.debug('existing profile', existingProfile);
 	return existingProfile[0]?.profile ? JSON.parse(existingProfile[0].profile) : {};
 };
+
+const getSecret = (secretRequest: GetSecretValueRequest) => {
+	return new Promise<SecretInfo>((resolve) => {
+		secretsManager.getSecretValue(secretRequest, (err, data: GetSecretValueResponse) => {
+			const secretInfo: SecretInfo = JSON.parse(data.SecretString);
+			resolve(secretInfo);
+		});
+	});
+};
+
+interface SecretInfo {
+	readonly clientId: string;
+	readonly clientSecret: string;
+	readonly fsJwtTokenKey: string;
+}
