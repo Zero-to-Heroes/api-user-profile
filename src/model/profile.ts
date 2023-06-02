@@ -1,5 +1,7 @@
 export interface Profile {
 	readonly sets?: readonly ProfileSet[];
+	readonly achievementCategories?: readonly ProfileAchievementCategory[];
+	readonly shareAlias?: string;
 }
 
 export interface ProfileSet {
@@ -16,4 +18,12 @@ export interface CardsForSet {
 	readonly rare: number;
 	readonly epic: number;
 	readonly legendary: number;
+}
+
+export interface ProfileAchievementCategory {
+	readonly id: number;
+	readonly availablePoints: number;
+	readonly points: number;
+	readonly completedAchievements: number;
+	readonly totalAchievements: number;
 }

@@ -47,6 +47,9 @@ const mergeProfiles = (existingProfile: Profile, newProfile: ProfileUpdateInput)
 		...existingProfile,
 		...newProfile,
 	};
+	// if (result.shareAlias === 'daedin') {
+	// console.debug('merged profile', existingProfile, newProfile, result);
+	// }
 	delete result.jwt;
 	return result;
 };

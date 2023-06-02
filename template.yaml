@@ -23,21 +23,21 @@ Resources:
             AutoPublishAlias: live
             FunctionUrlConfig:
                 AuthType: NONE
-    RetrieveProfileFunction:
+    RetrieveOtherProfileFunction:
         Type: AWS::Serverless::Function
         Properties:
-            Handler: retrieve-profile.default
+            Handler: retrieve-other-profile.default
             Runtime: nodejs18.x
             Timeout: 10
             MemorySize: 256
-            CodeUri: ./dist/retrieve-profile
+            CodeUri: ./dist/retrieve-other-profile
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
                 - AmazonSESFullAccess
                 - SecretsManagerReadWrite
                 # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
             Tags:
-                LambdaName: api-retrieve-profile
+                LambdaName: api-other-retrieve-profile
             AutoPublishAlias: live
             FunctionUrlConfig:
                 AuthType: NONE
@@ -56,6 +56,42 @@ Resources:
                 # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
             Tags:
                 LambdaName: api-retrieve-own-profile
+            AutoPublishAlias: live
+            FunctionUrlConfig:
+                AuthType: NONE
+    ShareProfileFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: share-profile.default
+            Runtime: nodejs18.x
+            Timeout: 10
+            MemorySize: 256
+            CodeUri: ./dist/share-profile
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - AmazonSESFullAccess
+                - SecretsManagerReadWrite
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: api-share-profile
+            AutoPublishAlias: live
+            FunctionUrlConfig:
+                AuthType: NONE
+    UnshareProfileFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: unshare-profile.default
+            Runtime: nodejs18.x
+            Timeout: 10
+            MemorySize: 256
+            CodeUri: ./dist/unshare-profile
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - AmazonSESFullAccess
+                - SecretsManagerReadWrite
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: api-unshare-profile
             AutoPublishAlias: live
             FunctionUrlConfig:
                 AuthType: NONE

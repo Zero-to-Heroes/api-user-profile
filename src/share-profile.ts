@@ -5,7 +5,6 @@ import { logger } from '@firestone-hs/aws-lambda-utils/dist/services/logger';
 import SecretsManager, { GetSecretValueRequest, GetSecretValueResponse } from 'aws-sdk/clients/secretsmanager';
 import { JwtPayload, decode, verify } from 'jsonwebtoken';
 import { ServerlessMysql } from 'serverless-mysql';
-import { Profile } from './public-api';
 
 const secretsManager = new SecretsManager({ region: 'us-west-2' });
 
@@ -30,9 +29,10 @@ export default async (event, context): Promise<any> => {
 		};
 	}
 
-	const message: { token: string } = JSON.parse(event.body);
+	const message: { token: string; shareAlias: string } = JSON.parse(event.body);
 	const token = message.token;
 	const decoded = decode(token) as JwtPayload;
+	console.log('decoded', decoded);
 	const secretRequest: GetSecretValueRequest = {
 		SecretId: 'sso',
 	};
@@ -51,29 +51,34 @@ export default async (event, context): Promise<any> => {
 	}
 
 	const mysql = await getConnection();
-	const existingProfile = await getExistingProfile(mysql, decoded.sub);
+	const isAliasAvailable = await checkAliasAvailable(mysql, decoded.userName, message.shareAlias);
+	if (!isAliasAvailable || message.shareAlias?.length > 30) {
+		cleanup();
+		return {
+			statusCode: 409,
+			headers: headers,
+		};
+	}
+	await shareProfile(mysql, decoded.userName, message.shareAlias);
 	await mysql.end();
 	cleanup();
 	return {
 		statusCode: 200,
 		headers: headers,
-		body: JSON.stringify(existingProfile),
+		body: JSON.stringify({ shareAlias: message.shareAlias }),
 	};
 };
 
-const getExistingProfile = async (mysql: ServerlessMysql, userName: string): Promise<Profile> => {
-	const existingProfile = await mysql.query('SELECT * FROM user_profile WHERE userName = ?', [userName]);
-	logger.debug('existing profile', existingProfile);
-	if (!existingProfile[0]?.profile?.length) {
-		return {};
-	}
+const checkAliasAvailable = async (mysql: ServerlessMysql, userName: string, shareAlias: string): Promise<boolean> => {
+	const existingProfile: any[] = await mysql.query(
+		'SELECT * FROM user_profile WHERE shareAlias = ? AND userName != ?',
+		[shareAlias, userName],
+	);
+	return existingProfile.length === 0;
+};
 
-	const profile = JSON.parse(existingProfile[0].profile);
-	const ammeded: Profile = {
-		...profile,
-		shareAlias: existingProfile[0].shareAlias,
-	};
-	return ammeded;
+const shareProfile = async (mysql: ServerlessMysql, userName: string, shareAlias: string): Promise<void> => {
+	await mysql.query('UPDATE user_profile SET shareAlias = ? WHERE userName = ?', [shareAlias, userName]);
 };
 
 const getSecret = (secretRequest: GetSecretValueRequest) => {
