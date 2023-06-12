@@ -1,6 +1,6 @@
 {
 	"name": "@firestone-hs/api-user-profile",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "",
 	"scripts": {
 		"lint": "eslint --color --fix --ext .ts .",

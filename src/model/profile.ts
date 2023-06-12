@@ -1,6 +1,7 @@
 export interface Profile {
 	readonly sets?: readonly ProfileSet[];
 	readonly achievementCategories?: readonly ProfileAchievementCategory[];
+	readonly bgFullTimeStatsByHero?: readonly ProfileBgHeroStat[];
 	readonly shareAlias?: string;
 }
 
@@ -26,4 +27,11 @@ export interface ProfileAchievementCategory {
 	readonly points: number;
 	readonly completedAchievements: number;
 	readonly totalAchievements: number;
+}
+
+export interface ProfileBgHeroStat {
+	readonly heroCardId: string;
+	readonly gamesPlayed: number;
+	readonly top4: number;
+	readonly top1: number;
 }
