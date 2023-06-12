@@ -37,11 +37,20 @@ export default async (event, context): Promise<any> => {
 		SecretId: 'sso',
 	};
 	const secret: SecretInfo = await getSecret(secretRequest);
-	const valid = verify(token, secret.fsJwtTokenKey, {
-		algorithms: ['HS256'],
-	});
+	try {
+		const valid = verify(token, secret.fsJwtTokenKey, {
+			algorithms: ['HS256'],
+		});
 
-	if (!valid?.sub) {
+		if (!valid?.sub) {
+			logger.warn('invalid token', token, decoded, message);
+			cleanup();
+			return {
+				statusCode: 403,
+				headers: headers,
+			};
+		}
+	} catch (e) {
 		logger.warn('invalid token', token, decoded, message);
 		cleanup();
 		return {
