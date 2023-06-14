@@ -1,7 +1,10 @@
+import { BoosterType } from '@firestone-hs/reference-data';
+
 export interface Profile {
 	readonly sets?: readonly ProfileSet[];
 	readonly achievementCategories?: readonly ProfileAchievementCategory[];
 	readonly bgFullTimeStatsByHero?: readonly ProfileBgHeroStat[];
+	readonly packsAllTime?: readonly ProfilePackStat[];
 	readonly shareAlias?: string;
 }
 
@@ -34,4 +37,9 @@ export interface ProfileBgHeroStat {
 	readonly gamesPlayed: number;
 	readonly top4: number;
 	readonly top1: number;
+}
+
+export interface ProfilePackStat {
+	readonly id: BoosterType;
+	readonly totalObtained: number;
 }
