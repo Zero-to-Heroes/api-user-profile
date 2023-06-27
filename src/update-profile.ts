@@ -1,11 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
-import {
-	getConnection,
-	logBeforeTimeout,
-	validateFirestoneToken,
-	validateOwToken,
-} from '@firestone-hs/aws-lambda-utils';
+import { getConnection, logBeforeTimeout, validateFirestoneToken } from '@firestone-hs/aws-lambda-utils';
 import { logger } from '@firestone-hs/aws-lambda-utils/dist/services/logger';
 import { ServerlessMysql } from 'serverless-mysql';
 import { Profile, ProfileUpdateInput } from './public-api';
@@ -21,9 +16,10 @@ export default async (event, context): Promise<any> => {
 
 	const token = message.jwt;
 	logger.debug('token', token);
-	const validationResult = message.isFirestoneToken
-		? await validateFirestoneToken(token)
-		: await validateOwToken(token);
+	const validationResult = await validateFirestoneToken(token);
+	// const validationResult = message.isFirestoneToken
+	// 	? await validateFirestoneToken(token)
+	// 	: await validateOwToken(token);
 	logger.debug('validation result', validationResult);
 	if (!validationResult?.username) {
 		cleanup();
