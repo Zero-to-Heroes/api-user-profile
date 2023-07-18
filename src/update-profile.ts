@@ -29,10 +29,16 @@ export default async (event, context): Promise<any> => {
 		};
 	}
 
+	// Don't use s3 to store the info, as we need the shareAlias
+	// We could have a mix s3 + sql, but that's a bit more complex and probably not useful right now
 	const mysql = await getConnection();
 	const existingProfile = await getExistingProfile(mysql, validationResult?.username);
 	const newProfile = mergeProfiles(existingProfile, message);
 	await updateProfile(mysql, validationResult?.username, newProfile);
+
+	if (validationResult?.username === 'daedin') {
+		logger.dumpBuffer();
+	}
 
 	await mysql.end();
 	cleanup();
@@ -40,9 +46,9 @@ export default async (event, context): Promise<any> => {
 };
 
 const getExistingProfile = async (mysql: ServerlessMysql, userName: string): Promise<Profile> => {
-	const existingProfile = await mysql.query('SELECT * FROM user_profile WHERE userName = ?', [userName]);
-	logger.debug('existing profile', existingProfile);
-	return existingProfile[0]?.profile ? JSON.parse(existingProfile[0].profile) : {};
+	const existingProfileSql = await mysql.query('SELECT * FROM user_profile WHERE userName = ?', [userName]);
+	logger.debug('existingProfileSql', existingProfileSql);
+	return existingProfileSql[0]?.profile ? JSON.parse(existingProfileSql[0].profile) : {};
 };
 
 const mergeProfiles = (existingProfile: Profile, newProfile: ProfileUpdateInput): Profile => {
