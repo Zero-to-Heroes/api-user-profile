@@ -57,7 +57,7 @@ export interface ProfileClassProgress {
 	readonly playerClass: CardClass;
 	readonly level: number;
 	readonly wins: number;
-	// I don't think I can have info about this
-	// readonly losses: number;
-	// readonly ties: number;
+	readonly losses: number;
+	readonly ties: number;
+	readonly winsForModes: readonly ProfileWinsForMode[];
 }
