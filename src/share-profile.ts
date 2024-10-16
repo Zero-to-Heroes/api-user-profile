@@ -53,6 +53,7 @@ export default async (event, context): Promise<any> => {
 	const mysql = await getConnection();
 	const isAliasAvailable = await checkAliasAvailable(mysql, decoded.userName, message.shareAlias);
 	if (!isAliasAvailable || message.shareAlias?.length > 30) {
+		await mysql.end();
 		cleanup();
 		return {
 			statusCode: 409,
