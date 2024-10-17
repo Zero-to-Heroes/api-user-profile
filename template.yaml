@@ -4,7 +4,19 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: API for user profile
 
+Globals:
+    Function:
+        Environment:
+            Variables:
+                SQS_URL: !Ref UpdateProfileQueue
+
 Resources:
+    UpdateProfileQueue:
+        Type: AWS::SQS::Queue
+        Properties:
+            QueueName: deferred-update-profile-queue
+            VisibilityTimeout: 601
+
     UpdateProfileFunction:
         Type: AWS::Serverless::Function
         Properties:
@@ -18,6 +30,7 @@ Resources:
             Policies:
                 - AWSLambdaVPCAccessExecutionRole
                 - AmazonSESFullAccess
+                - AmazonSQSFullAccess
                 - SecretsManagerReadWrite
                 - AmazonS3FullAccess
                 - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
@@ -27,6 +40,36 @@ Resources:
             AutoPublishAlias: live
             FunctionUrlConfig:
                 AuthType: NONE
+                
+    
+    ProcessUpdateProfileFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            Handler: process-update-profile.default
+            Runtime: nodejs18.x
+            CodeUri: ./dist/process-update-profile
+            MemorySize: 256
+            ReservedConcurrentExecutions: 1
+            # Layers:
+            #     - !Sub "arn:aws:lambda:${AWS::Region}:580247275435:layer:LambdaInsightsExtension:14"
+            Policies:
+                - AWSLambdaVPCAccessExecutionRole
+                - SecretsManagerReadWrite
+                - AmazonSESFullAccess
+                - AmazonSQSFullAccess
+                - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
+                # - arn:aws:iam::478062583808:policy/CloudWatchPolicyForLambda # See https://stackoverflow.com/questions/51166504/disable-cloudwatch-to-monitor-logs-for-lambda-function
+            Tags:
+                LambdaName: process-update-profile
+            Timeout: 60
+            Events:
+                SQSEvent:
+                    Type: SQS
+                    Properties:
+                        Queue: !GetAtt UpdateProfileQueue.Arn
+                        BatchSize: 20
+                        MaximumBatchingWindowInSeconds: 60
+
     RetrieveOtherProfileFunction:
         Type: AWS::Serverless::Function
         Properties:
